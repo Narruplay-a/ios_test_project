@@ -43,14 +43,22 @@
 import SwiftUI
 
 struct ContentView: View {
-    private let requestURL: URL  = .init(string: "https://food-delivery-api-bunbeauty.herokuapp.com")!
-    private let parameters: [String: Any] = ["companyUuid": "7416dba5-2825-4fe3-abfb-1494a5e2bf99"]
+    private let requestURL: URL = .init(string: "https://food-delivery-api-bunbeauty.herokuapp.com/menu_product")!
     
     var body: some View {
         VStack {
             
         }
         .padding()
+    }
+    
+    func loadProducts() {
+        let url = requestURL.appending(queryItems: [URLQueryItem(name: "companyUuid", value: "7416dba5-2825-4fe3-abfb-1494a5e2bf99")])
+        let urlRequest = URLRequest(url: url)
+        
+        URLSession.shared.dataTask(with: urlRequest) { data, _, error in
+            
+        }
     }
 }
 
@@ -60,13 +68,13 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-struct ProductRequestObject: Codable {
+struct ResultObject: Codable {
     let count   : Int
     let results : [ProductObject]
 }
 
 struct ProductObject: Codable {
-    let uuid    : String
-    let name    : String
-    let price   : Int
+    let uuid        : String
+    let name        : String
+    let newPrice    : Int
 }
