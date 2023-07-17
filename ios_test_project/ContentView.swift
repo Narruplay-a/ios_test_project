@@ -52,13 +52,39 @@ struct ContentView: View {
         .padding()
     }
     
-    func loadProducts() {
+    func loadProducts(resultCallback: @escaping (Result<[ProductObject], Error>) -> Void) {
         let url = requestURL.appending(queryItems: [URLQueryItem(name: "companyUuid", value: "7416dba5-2825-4fe3-abfb-1494a5e2bf99")])
         let urlRequest = URLRequest(url: url)
         
-        URLSession.shared.dataTask(with: urlRequest) { data, _, error in
+        let task = URLSession.shared.dataTask(with: urlRequest) { data, _, error in
+            guard let data = data else {
+                resultCallback(.failure(error ?? APIError.emptyData))
+                return
+            }
             
+            do {
+                let decoder = JSONDecoder()
+                let requestResult = try decoder.decode(ResultObject.self, from: data)
+                
+                resultCallback(.success(requestResult.results))
+            } catch {
+                resultCallback(.failure(error))
+            }
         }
+        
+        task.resume()
+    }
+    
+    func loadProducts() async throws -> [ProductObject] {
+        let url = requestURL.appending(queryItems: [URLQueryItem(name: "companyUuid", value: "7416dba5-2825-4fe3-abfb-1494a5e2bf99")])
+        let urlRequest = URLRequest(url: url)
+        
+        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let decoder = JSONDecoder()
+        
+        let requestResult = try decoder.decode(ResultObject.self, from: data)
+        
+        return requestResult.results
     }
 }
 
@@ -73,8 +99,13 @@ struct ResultObject: Codable {
     let results : [ProductObject]
 }
 
-struct ProductObject: Codable {
+struct ProductObject: Codable, Identifiable {
+    var id: String { uuid }
     let uuid        : String
     let name        : String
     let newPrice    : Int
+}
+
+enum APIError: Error {
+    case emptyData
 }
